@@ -44,7 +44,7 @@ Here, we choose K=2 since, the highest signal of genomic variation is between tw
 pcaadapt_K2 <- pcadapt(data, K = 4)
 ```
 
-## 2. Identify markers driving the highest genomic variation observed
+## 3. Identify markers driving the highest genomic variation observed
 
 After choosing the righ number of K to select, compute the test statistic based on a Principal Component Analysis.
 
