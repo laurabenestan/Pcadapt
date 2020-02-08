@@ -4,7 +4,9 @@
 
 PCAadapt is a R package R package that performs genome scans to detect genes potentially under divergent selection based on a principal component analysis. To read more about the package see (Lu and Blum)[https://onlinelibrary.wiley.com/doi/abs/10.1111/1755-0998.12592]
 
+---
 ## 1. Download R package and input dataset
+---
 
 Download libraries. 
 ```{r}
@@ -21,7 +23,9 @@ data <- read.pcadapt("batch_1.vcf", type = "vcf")
 # number of loci detected:		12735
 ```
 
+---
 ## 2. Define the highest signal of genomic variation
+---
 
 Run pcadapt function by first perform it with a large enough number of principal components (e.g. K=20) in order to maximize your capacity of detecting any population structure in your dataset.
 ```{r}
@@ -44,7 +48,9 @@ Here, we choose K=2 since, the highest signal of genomic variation is between tw
 pcaadapt_K2 <- pcadapt(data, K = 4)
 ```
 
+---
 ## 3. Identify markers driving the highest genomic variation observed
+---
 
 After choosing the righ number of K to select, compute the test statistic based on a Principal Component Analysis.
 
