@@ -5,6 +5,26 @@
 PCAadapt is a R package R package that performs genome scans to detect genes potentially under divergent selection based on a principal component analysis. To read more about the package see (Lu and Blum)[https://onlinelibrary.wiley.com/doi/abs/10.1111/1755-0998.12592]
 
 ---
+## 0. Prepare your data
+---
+
+** Prepare a .bed file** from your vcf file.
+To do so, first use [VCFTOOLS](http://vcftools.sourceforge.net) in the terminal.
+```{r, engine = 'bash', eval = FALSE}
+vcftools --vcf nameofyourfile.vcf --plink-tped --out nameofyourfile
+```
+
+Then, use and [PLINK](http://zzz.bwh.harvard.edu/plink/).
+```{r, engine = 'bash', eval = FALSE}
+plink --tped nameofyourfile.tped --tfam nameofyourfile.tfam --make-bed --out nameofyourfile
+```
+
+The commend `--make-bed` will produce three files:
+- a binary ped file (*.bed)
+- the pedigree/phenotype information file (*.fam)
+- an extended MAP file (*.bim) that contains information about the allele names, which would otherwise be lost in the .bed file
+
+---
 ## 1. Download R package and input dataset
 ---
 
@@ -18,7 +38,7 @@ library('qvalue')
 
 Import vcf. 
 ```{r}
-data <- read.pcadapt("batch_1.vcf", type = "vcf")
+data <- read.pcadapt("batch_1.bed", type = "bed")
 # number of individuals detected:	44
 # number of loci detected:		12735
 ```
