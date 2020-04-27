@@ -40,6 +40,7 @@ library("pcadapt")
 library("vcfR")
 library("plyr")
 library('qvalue')
+library("dplyr")
 ```
 
 Import vcf or .bed (in this case check the info above).
@@ -47,6 +48,22 @@ Import vcf or .bed (in this case check the info above).
 data <- read.pcadapt("batch_1.bed", type = "bed")
 # number of individuals detected:	44
 # number of loci detected:		12735
+```
+
+Import in which order individuals order are labelled in the .vcf using the .tfam file.
+```{r}
+ind <- read.table("44ind.tfam")
+```
+
+Import important biological information.
+```{r}
+ind_pop_mpa <- read.table("mpa_info_44ind.txt", header=TRUE, sep="\t")
+```
+
+Merge individuals and pop information
+```{r}
+ind_mpa <- merge(ind, ind_pop_mpa, by.x=c("V1"), by.y=c("IND"))
+ind_mpa_info <- select(ind_mpa, V1,LAT,LON,DISTANCE,MPA,CATEGORY)
 ```
 
 ---
@@ -74,6 +91,24 @@ Here, we choose K=2 since, the highest signal of genomic variation is between tw
 pcaadapt_K2 <- pcadapt(data, K = 4)
 ```
 
+Create a dataframe gathering PCAadapt clustering information and MPA info
+```{r}
+pca_adapt_mpa <-cbind(data_pcadapt$scores, ind_mpa) 
+```
+
+Visualising the results according to MPA and Inside/Outside
+```{r}
+ggplot(pca_adapt_mpa, aes(x=pca_adapt_mpa$`1`, y=pca_adapt_mpa$`2`, shape = CATEGORY, fill= factor(MPA)))+
+         geom_point(size=1.5)+
+  scale_shape_manual(values=c(21, 24))+
+  scale_fill_brewer(palette="Accent", guide=FALSE)+
+  facet_wrap(~MPA)+
+  theme_classic()+
+  xlab("PC1")+
+  ylab("PC2")+ 
+  theme_bw()
+```
+
 ---
 ## 3. Identify markers driving the highest genomic variation observed
 ---
@@ -98,15 +133,16 @@ hist(data_pcadapt$pvalues, xlab = "p-values", main = NULL, breaks = 50, col = "o
 Match the SNP with the Pvalues information
 ```{r}
 snp_pvalue <- cbind(snp, data_pcadapt$pvalues) 
+colnames(snp_pvalue) <- c("SNP","PVALUES")
 ```
 By default, the parameter min.maf is set to 5%. P-values of SNPs with a minor allele frequency smaller than the threshold are not computed (NA is returned). Check you have no NA.
 ```{r}
-sum(is.na(data_pcadapt$pvalues))
+sum(is.na(snp_pvalue$PVALUES))
 ```
 
 Choose a cutoff for outlier detection with the **Q-values**.
 ```{r}
-qval <- qvalue(data_pcadapt$pvalues)$qvalues
+qval <- qvalue(snp_pvalue$PVALUES)$qvalues
 alpha <- 0.01
 outliers <- which(qval < alpha)
 length(outliers)
@@ -114,7 +150,7 @@ length(outliers)
 
 Choose a cutoff for outlier detection with the **Bonferroni correction**.
 ```{r}
-padj <- p.adjust(data_pcadapt$pvalues,method="bonferroni")
+padj <- p.adjust(snp_pvalue$PVALUES,method="bonferroni")
 alpha <- 0.00000004
 outliers <- which(padj < alpha)
 length(outliers)
@@ -122,12 +158,26 @@ length(outliers)
 
 Choose a cutoff for outlier detection with the **Benjamini-Hochberg Procedure**.
 ```{r}
-padj <- p.adjust(data_pcadapt$pvalues,method="BH")
+padj <- p.adjust(snp_pvalue$PVALUES,method="BH")
 alpha <- 0.01
 outliers <- which(padj < alpha)
 length(outliers)
 ```
 Save the results.
 ```{r}
-write.table(outliers, "386Outliers-bh.txt", sep="\t", quote=FALSE, row.names=FALSE) 
+write.table(snp_pvalue, "677outliers-bh.txt", sep="\t", quote=FALSE, row.names=FALSE) 
 ```
+
+## 4. Identify top outliers
+
+Visualize the distribution of p-values
+```{r}
+quantile(snp_pvalue$PVALUES, probs = c(0.01, 0.99))
+```
+
+Get only the top 1% of the markers.
+```{r}
+top_1percent <- subset(snps_pvalue, snp_pvalue$PVALUES <= 4.823761e-39)
+write.table(top_1percent, "Outliers.txt", sep="\t", quote=FALSE, row.names = FALSE)
+```
+
