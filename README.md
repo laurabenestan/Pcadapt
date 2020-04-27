@@ -8,7 +8,7 @@ PCAadapt is a R package R package that performs genome scans to detect genes pot
 ## 0. Prepare your data
 ---
 
-** Prepare a .bed file** from your vcf file or use your vcf file.
+If you use a very recent the 4.3 version of vcftools, you need to **prepare a .bed file** from your vcf file to use pcadapt.
 To do so, first use [VCFTOOLS](http://vcftools.sourceforge.net) in the terminal.
 ```{r, engine = 'bash', eval = FALSE}
 vcftools --vcf nameofyourfile.vcf --plink-tped --out nameofyourfile
@@ -25,8 +25,8 @@ The command `--make-bed` will produce three files:
 - an extended MAP file (*.bim) that contains information about the allele names, which would otherwise be lost in the .bed file
 
 Now extract the information of the order of each SNP in the vcf file. 
-If you have info on chromosome or scaffold position, you may want to use the first and second column of your vcf (i.e. CHROM POS).
-If you do not hav ethis information, you may need to extract the third colum of your vcf (i.e. ID).
+***Model organism***. If you have info on chromosome or scaffold position, you may want to use the first and second column of your vcf (i.e. CHROM POS).
+***Non-model organism***. If you do not have this information, you may need to extract the third colum of your vcf (i.e. ID).
 ```{r, engine = 'bash', eval = FALSE}
 grep -v "#" nameofyourfile.vcf | cut -f 3 > yournumberofsnps.txt
 ```
