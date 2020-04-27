@@ -8,7 +8,7 @@ PCAadapt is a R package R package that performs genome scans to detect genes pot
 ## 0. Prepare your data
 ---
 
-** Prepare a .bed file** from your vcf file.
+** Prepare a .bed file** from your vcf file or use your vcf file.
 To do so, first use [VCFTOOLS](http://vcftools.sourceforge.net) in the terminal.
 ```{r, engine = 'bash', eval = FALSE}
 vcftools --vcf nameofyourfile.vcf --plink-tped --out nameofyourfile
@@ -19,11 +19,17 @@ Then, use and [PLINK](http://zzz.bwh.harvard.edu/plink/).
 plink --tped nameofyourfile.tped --tfam nameofyourfile.tfam --make-bed --out nameofyourfile
 ```
 
-The commend `--make-bed` will produce three files:
+The command `--make-bed` will produce three files:
 - a binary ped file (*.bed)
 - the pedigree/phenotype information file (*.fam)
 - an extended MAP file (*.bim) that contains information about the allele names, which would otherwise be lost in the .bed file
 
+Now extract the information of the order of each SNP in the vcf file. 
+If you have info on chromosome or scaffold position, you may want to use the first and second column of your vcf (i.e. CHROM POS).
+If you do not hav ethis information, you may need to extract the third colum of your vcf (i.e. ID).
+```{r, engine = 'bash', eval = FALSE}
+grep -v "#" nameofyourfile.vcf | cut -f 3 > yournumberofsnps.txt
+```
 ---
 ## 1. Download R package and input dataset
 ---
@@ -36,7 +42,7 @@ library("plyr")
 library('qvalue')
 ```
 
-Import vcf. 
+Import vcf or .bed (in this case check the info above).
 ```{r}
 data <- read.pcadapt("batch_1.bed", type = "bed")
 # number of individuals detected:	44
@@ -89,6 +95,15 @@ Draw an histogram of the p-values: the excess of small p-values indicates the pr
 hist(data_pcadapt$pvalues, xlab = "p-values", main = NULL, breaks = 50, col = "orange")
 ```
 
+Match the SNP with the Pvalues information
+```{r}
+snp_pvalue <- cbind(snp, data_pcadapt$pvalues) 
+```
+By default, the parameter min.maf is set to 5%. P-values of SNPs with a minor allele frequency smaller than the threshold are not computed (NA is returned). Check you have no NA.
+```{r}
+sum(is.na(data_pcadapt$pvalues))
+```
+
 Choose a cutoff for outlier detection with the **Q-values**.
 ```{r}
 qval <- qvalue(data_pcadapt$pvalues)$qvalues
@@ -100,7 +115,7 @@ length(outliers)
 Choose a cutoff for outlier detection with the **Bonferroni correction**.
 ```{r}
 padj <- p.adjust(data_pcadapt$pvalues,method="bonferroni")
-alpha <- 0.000000000000001
+alpha <- 0.00000004
 outliers <- which(padj < alpha)
 length(outliers)
 ```
